@@ -48,11 +48,11 @@ const RatingBreakdown = ({reviews, setReviews, metaData, product}) => {
   // }, [metaDataRatings])
 
   useEffect(() => {
-    let fives = Number(metaDataRatings[5])
-    let fours = Number(metaDataRatings[4])
-    let threes = Number(metaDataRatings[3])
-    let twos = Number(metaDataRatings[2])
-    let ones = Number(metaDataRatings[1])
+    let fives = Number(metaDataRatings[5]) || 0
+    let fours = Number(metaDataRatings[4]) || 0
+    let threes = Number(metaDataRatings[3]) || 0
+    let twos = Number(metaDataRatings[2]) || 0
+    let ones = Number(metaDataRatings[1]) || 0
     let score = (fives * 5 + fours * 4 + threes * 3+ twos * 2 + ones) / (totalReviews)
     let recommending = metaDataRecommended[true]
 

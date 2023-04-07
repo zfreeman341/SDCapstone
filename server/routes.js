@@ -117,7 +117,6 @@ router.get('/reviews', (req, res) => {
     `,
     [req.query.product_id, req.query.count, req.query.page],
     (err, results) => {
-      console.log(results, '------LINE 120-----')
       if (err) {
         // Handle the error
         console.error(err)
@@ -278,19 +277,67 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
 // -------------------------------------
 
 router.post('/reviews', (req, res) => {
-  if (req.body.product_id === undefined) {
-    res.status(404).send('Must provide a "product_id" parameter')
+  const { product_id, rating, summary, body, recommend, name, email, photos, characteristics } = req.body;
+
+  if (!product_id) {
+    return res.status(404).send('Must provide a "product_id" parameter');
   }
 
-  axios.post(`${HEROKU_API_END_POINT}/reviews`, req.body, req.options)
-    .then(response => {
-      res.status(201).send('Successfully posted review to Atelier API');
+  const query = {
+    text: `
+    INSERT INTO reviews (product_id, rating, summary, body, recommend, reviewer_name, reviewer_email)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING id
+    `,
+    values: [product_id, rating, summary, body, recommend, name, email]
+  }
+
+  db.query(query)
+    .then((result) => {
+      console.log(result, '------RESULT------')
+      const reviewId = result.rows[0].id
+      if (photos && photos.length) {
+        const photoQuery = {
+          text: `
+          INSERT INTO review_photos (review_id, url)
+          VALUES ($1, $2)
+          `,
+          values: photos.map((url) => [reviewId, url])
+        }
+        db.query(photoQuery)
+      }
+      const charQueries = Object.keys(characteristics).map((charId) => {
+        const charQuery = {
+          text: `
+          INSERT INTO characteristicReviews (characteristic_id, review_id, value)
+          VALUES ($1, $2, $3)
+          `,
+          values: [charId, reviewId, characteristics[charId]]
+        }
+        return db.query(charQuery)
+      })
+      res.status(201).send('Successfully posted review to PostgreSQL database')
     })
-    .catch(err => {
-      console.log(err)
-      res.status(404).send('Error connecting to Atelier Reviews API');
+    .catch((err) => {
+      console.error(err)
+      res.status(500).send('Error connecting to PostgreSQL database')
     })
-})
+});
+
+// router.post('/reviews', (req, res) => {
+//   if (req.body.product_id === undefined) {
+//     res.status(404).send('Must provide a "product_id" parameter')
+//   }
+
+//   axios.post(`${HEROKU_API_END_POINT}/reviews`, req.body, req.options)
+//     .then(response => {
+//       res.status(201).send('Successfully posted review to Atelier API');
+//     })
+//     .catch(err => {
+//       console.log(err)
+//       res.status(404).send('Error connecting to Atelier Reviews API');
+//     })
+// })
 
 // -------------------------------------
 //              Q&A
