@@ -93,10 +93,10 @@ const App = ({initialProduct}) => {
     <div>
       {/* <h1 className="text-3xl font-bold mb-40"> Hello, World!</h1> */}
       <Header quickLinks={quickLinks} handleSearch={handleSearch} calculateHeaderHeight={calculateHeaderHeight} cartLength={cartLength}/>
-      <Overview cartLength={cartLength} setCartLength={setCartLength} product={product} onMouseOver={e => dispatch(trackModule('overview'))} headerHeight={headerHeight}/>
-      <Related product={product} onMouseOver={e => dispatch(trackModule('related'))} updateProduct={updateProduct} headerHeight={headerHeight}/>
+      {/* <Overview cartLength={cartLength} setCartLength={setCartLength} product={product} onMouseOver={e => dispatch(trackModule('overview'))} headerHeight={headerHeight}/> */}
+      {/* <Related product={product} onMouseOver={e => dispatch(trackModule('related'))} updateProduct={updateProduct} headerHeight={headerHeight}/> */}
       <Ratings product={product} onMouseOver={e => dispatch(trackModule('ratings'))} headerHeight={headerHeight}/>
-      <QAndA product={product} onMouseOver={e => dispatch(trackModule('qa'))}/>
+      {/* <QAndA product={product} onMouseOver={e => dispatch(trackModule('qa'))}/> */}
     </div>
   )
 

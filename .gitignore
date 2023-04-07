@@ -7,3 +7,4 @@ client/dist/bundle.js.map
 client/dist/output.css
 client/src/app.jsx
 coverage
+server/database.js

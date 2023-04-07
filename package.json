@@ -72,6 +72,8 @@
     "mysql2": "^3.2.0",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "path": "^0.12.7",
+    "pg": "^8.10.0",
+    "postgres": "^3.3.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-redux": "^8.0.5",

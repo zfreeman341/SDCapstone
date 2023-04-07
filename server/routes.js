@@ -4,6 +4,7 @@ const router = Router()
 const axios = require('axios')
 const dotenv = require('dotenv')
 const { ConcatenationScope } = require('webpack')
+const db = require('./database.js')
 
 // Heroku API info
 const HEROKU_API_END_POINT = 'https://app-hrsei-api.herokuapp.com/api/fec2/hr-rfe'
@@ -101,33 +102,135 @@ router.get('/products/:product_id/related', (req, res) => {
 
 router.get('/reviews', (req, res) => {
 
-  if (req.options.params.product_id === undefined) {
+  if (req.query.product_id === undefined) {
     res.status(404).send('Must provide a "product_id" parameter')
   }
-
-  axios.get(`${HEROKU_API_END_POINT}/reviews`, req.options)
-    .then ((result) => {
-      res.send(result.data)
-    })
-    .catch((err) => {
-      console.log(err)
-    })
+  console.log('in the route')
+  db.query(`
+    SELECT r.*, p.*
+    FROM reviews r
+    LEFT JOIN reviewPhotos p ON r.id = p.review_id
+    WHERE r.product_id = $1
+      AND r.reported = 'false'
+    ORDER BY r.date DESC
+    LIMIT $2 OFFSET $3;
+    `,
+    [req.query.product_id, req.query.count, req.query.page],
+    (err, results) => {
+      console.log(results, '------LINE 120-----')
+      if (err) {
+        // Handle the error
+        console.error(err)
+        res.sendStatus(500)
+      } else {
+        const formattedResults = results.rows.reduce((acc, review) => {
+          const photo = review.photo ? { id: review.photo_id, url: review.url } : null;
+          acc.push({
+            review_id: review.id,
+            rating: review.rating,
+            summary: review.summary,
+            recommend: review.recommend,
+            response: review.response,
+            body: review.body,
+            date: review.date,
+            reviewer_name: review.reviewer_name,
+            helpfulness: review.helpfulness,
+            photos: photo ? [photo] : [],
+          });
+          return acc;
+        }, []);
+        const data = {
+          product: req.query.product_id,
+          page: req.query.page,
+          count: req.query.count,
+          results: formattedResults,
+        };
+        res.send(data);
+      }
+    }
+  );
 })
+  // db.query(
+  // axios.get(`${HEROKU_API_END_POINT}/reviews`, req.options)
+  //   .then ((result) => {
+  //     res.send(result.data)
+  //   })
+  //   .catch((err) => {
+  //     console.log(err)
+  //   })
+  router.get('/reviews/meta', async (req, res) => {
+    const productId = req.query.product_id;
 
-router.get('/reviews/meta', (req, res) => {
-  if (req.options.params.product_id === undefined) {
-    res.status(404).send('Must provide a "product_id" parameter')
-  }
-  axios.get(`${HEROKU_API_END_POINT}/reviews/meta`, req.options)
-  .then ((result) => {
-    res.send(result.data)
-  })
-  .catch((err) => {
-    console.log(err)
-  })
-})
+    try {
+      const { rows: ratings } = await db.query(`
+        SELECT rating, count(*)
+        FROM reviews
+        WHERE product_id = $1
+        GROUP BY rating
+        ORDER BY rating ASC
+      `, [productId]);
+
+      const { rows: recommended } = await db.query(`
+        SELECT recommend, count(*)
+        FROM reviews
+        WHERE product_id = $1
+        GROUP BY recommend
+      `, [productId]);
+
+      const { rows: characteristics } = await db.query(`
+        SELECT
+          c.name,
+          c.id,
+          AVG(value)::float AS average,
+          COUNT(*) AS count
+        FROM characteristics c
+        JOIN characteristicReviews cr ON c.id = cr.characteristic_id
+        JOIN reviews r ON cr.review_id = r.id
+        WHERE r.product_id = $1
+        GROUP BY c.id
+      `, [productId]);
+
+      const response = {
+        product_id: productId,
+        ratings: {},
+        recommended: {},
+        characteristics: {},
+      };
+
+      ratings.forEach((rating) => {
+        response.ratings[rating.rating] = rating.count;
+      });
+
+      recommended.forEach((recommend) => {
+        response.recommended[recommend.recommend] = recommend.count;
+      });
+
+      characteristics.forEach((characteristic) => {
+        response.characteristics[characteristic.name] = {
+          id: characteristic.id,
+          value: characteristic.average,
+          count: characteristic.count,
+        };
+      });
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Error in /reviews/meta', error);
+      res.status(500).send('Internal server error');
+    }
+  });
 
 
+  // if (req.options.params.product_id === undefined) {
+  //   res.status(404).send('Must provide a "product_id" parameter')
+  // }
+  // axios.get(`${HEROKU_API_END_POINT}/reviews/meta`, req.options)
+  // .then ((result) => {
+  //   res.send(result.data)
+  // })
+  // .catch((err) => {
+  //   console.log(err)
+  // })
 
 // -------------------------------------
 //              Q&A
