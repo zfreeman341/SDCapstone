@@ -23,7 +23,7 @@ const Ratings = ({product, onMouseOver, headerHeight}) => {
   // console.log(product)
 
 useEffect(() => {
-  axios.get(`/reviews?product_id=${product.id}&count=10`)
+  axios.get(`/reviews?product_id=${product.id}&count=100`)
   .then(response => {
     setReviews(response.data.results)
     setAllReviews(response.data.results)

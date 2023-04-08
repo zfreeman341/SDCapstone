@@ -2,15 +2,18 @@ const path = require('path');
 const client = require('../database');
 
 async function productsEtl() {
+  console.log('building products table...')
   try {
     await client.query(`CREATE TABLE IF NOT EXISTS products (
-      id INTEGER PRIMARY KEY DEFAULT nextval('products_id_seq'),
+      id serial PRIMARY KEY,
       name VARCHAR(255),
       slogan VARCHAR(255),
       description TEXT,
       category VARCHAR(255),
       default_price NUMERIC
-    )`)
+    );
+    CREATE INDEX products_name_category_idx ON products(name, category);
+    `)
     const filePath = path.join(__dirname, '../../../../../../../../../private/tmp/data/product.csv')
     await client.query(`
     COPY products(id, name, slogan, description, category, default_price)
@@ -24,7 +27,9 @@ async function productsEtl() {
   }
 }
 
+
 async function reviewsEtl() { //  INTEGER REFERENCES products(id) - for product
+  console.log('building reviews table...')
   try {
     await client.query(`CREATE TABLE IF NOT EXISTS reviews (
       id serial PRIMARY KEY,
@@ -36,10 +41,14 @@ async function reviewsEtl() { //  INTEGER REFERENCES products(id) - for product
       recommend BOOLEAN,
       reported BOOLEAN,
       reviewer_name VARCHAR(255),
-      reviewer_email VARCHAR(255),
+      reviewer_email VARCHAR(255),U
       response TEXT,
       helpfulness INTEGER
-    );`);
+    );
+    CREATE INDEX reviews_product_id_idx ON reviews(product_id);
+    CREATE INDEX reviews_date_idx ON reviews(date);
+    CREATE INDEX reviews_reported_idx ON reviews(reported) WHERE reported=true;
+    `);
 
     const filePath = path.join(__dirname, '../../../../../../../../../private/tmp/data/reviews.csv')
 
@@ -57,13 +66,15 @@ async function reviewsEtl() { //  INTEGER REFERENCES products(id) - for product
 }
 
 async function reviewPhotosEtl() {
+  console.log('building reviews table...')
   try {
     await client.query(`
     CREATE TABLE IF NOT EXISTS reviewPhotos (
       id SERIAL PRIMARY KEY,
       review_id INTEGER REFERENCES reviews(id),
       url VARCHAR(255)
-      )
+      );
+      CREATE INDEX reviewPhotos_review_id_idx ON reviewPhotos(review_id);
     `)
     const filePath = path.join(__dirname, '../../../../../../../../../private/tmp/data/reviews_photos.csv')
 
@@ -80,6 +91,7 @@ async function reviewPhotosEtl() {
 }
 
 async function characteristicsEtl() {
+  console.log('building characteristics table...')
   try {
     await client.query(`CREATE TABLE IF NOT EXISTS characteristics (
       id SERIAL PRIMARY KEY,
@@ -87,26 +99,36 @@ async function characteristicsEtl() {
       name VARCHAR(255)
     )`)
     const filePath = path.join(__dirname, '../../../../../../../../../private/tmp/data/characteristics.csv')
-      await client.query(`
+    await client.query(`
       COPY characteristics(id, product_id, name)
       FROM '${filePath}'
       DELIMITER ','
       CSV HEADER
-      `)
-      console.log('Characteristics ETL process successfully completed')
+    `);
+    await client.query(`
+      CREATE INDEX characteristics_product_id_idx ON characteristics(product_id);
+    `);
+    console.log('Characteristics ETL process successfully completed')
   } catch (err) {
     console.error('Error during Characteristics ETL process', err)
   }
 }
 
+
 async function characteristicReviewsEtl() { //  REFERENCES characteristics(id) - potentially add to characteristic_id, circlee back
+  console.log('building characteristic Reviews table...')
+
   try {
     await client.query(`CREATE TABLE IF NOT EXISTS characteristicReviews (
       id SERIAL PRIMARY KEY,
       characteristic_id INTEGER REFERENCES characteristics(id),
       review_id INTEGER REFERENCES reviews(id),
       value INTEGER
-    )`)
+    );
+    CREATE INDEX characteristicReviews_characteristic_id_idx ON characteristicReviews(characteristic_id);
+    CREATE INDEX characteristicReviews_review_id_idx ON characteristicReviews(review_id);
+
+    `)
     const filePath = path.join(__dirname, '../../../../../../../../../private/tmp/data/characteristic_reviews.csv')
 
       await client.query(`
@@ -121,7 +143,10 @@ async function characteristicReviewsEtl() { //  REFERENCES characteristics(id) -
   }
 }
 
+
 async function characteristicsCountEtl() {
+  console.log('building characteristics count table...')
+
   await client.query(`
   SELECT product_id, characteristic_id, review_id, value
   INTO characteristicsCount

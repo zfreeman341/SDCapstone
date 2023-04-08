@@ -33,8 +33,8 @@ const RatingBreakdown = ({reviews, setReviews, metaData, product}) => {
     setMetaDataRatings(ratingsStore)
 
     const recommendedStore = {}
-    for (let key in metaData.recommended) {
-      recommendedStore[key] = metaData.recommended[key]
+    for (let key in metaData.recommend) {
+      recommendedStore[key] = metaData.recommend[key]
     }
     setMetaDataRecommended(recommendedStore)
   }, [metaData])

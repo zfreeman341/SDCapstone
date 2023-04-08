@@ -27,7 +27,10 @@ const NewReview = ({product, reviews}) => {
     name: '',
     email: '',
     photos: [],
-    characteristics: characteristics
+    characteristics: characteristics,
+    helpfulness: 0,
+    reported: false,
+    response: null,
   })
 
   const handleFormSubmit = (e) => {
