@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import axios from "axios";
 
 const ReviewTile = ({review}) => {
@@ -19,6 +19,10 @@ const ReviewTile = ({review}) => {
         console.log('unable to mark Answer as helpful, error:', err);
       })
   }
+
+  useEffect(() => {
+    console.log(review.date)
+  }, [])
 
   const handleReportClick = e => {
     axios.put(`/reviews/${review.review_id}/report`)
@@ -44,7 +48,7 @@ const ReviewTile = ({review}) => {
                <path fillRule="nonzero" d="M6.707 14.707a1 1 0 0 1-1.414 0L2 10.414l1.414-1.414L6.707 12.586l8.293-8.293L18.586 5l-10 10z" />
                </svg>
             ) : null}
-            <p className="text-xs text-gray-500 ml-1">{review.reviewer_name} {review.date.split('T')[0]}</p>
+            <p className="text-xs text-gray-500 ml-1">{review.reviewer_name} {new Date(parseInt(review.date)).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'})}</p>
           </div>
         </div>
       <div className="flex flex-row space-x-4 w-16 h-16 mt-1">
