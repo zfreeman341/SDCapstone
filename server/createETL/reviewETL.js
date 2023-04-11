@@ -41,7 +41,7 @@ async function reviewsEtl() { //  INTEGER REFERENCES products(id) - for product
       recommend BOOLEAN,
       reported BOOLEAN,
       reviewer_name VARCHAR(255),
-      reviewer_email VARCHAR(255),U
+      reviewer_email VARCHAR(255),
       response TEXT,
       helpfulness INTEGER
     );

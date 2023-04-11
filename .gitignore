@@ -8,3 +8,4 @@ client/dist/output.css
 client/src/app.jsx
 coverage
 server/database.js
+sdc2.sql
